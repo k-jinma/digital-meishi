@@ -33,19 +33,15 @@
   }
 
   // ---- 入力フォーム（所属・氏名・連絡先の3グループ） -----------------------
-  // 初回は架空のサンプルを入れておく
-  const SAMPLE = {
-    og: '〇〇大学', dp: '情報学部 情報学科', tt: '教授',
-    ln: '山田', fn: '太郎', lk: 'ヤマダ', fk: 'タロウ',
-    t1l: '代表', t1: '000-000-0000', t2l: '研究室', t2: '000-000-0001',
-    em: 'yamada@example.ac.jp',
-  };
+  // 初期値は空にし、入力例は placeholder で示す
   const GROUPS = [
     ['所属', ['og', 'dp', 'tt']],
     ['氏名', ['ln', 'fn', 'lk', 'fk']],
     ['連絡先', ['t1', 't2', 'em', 'ur']],
   ];
-  state.values = state.values || { ...SAMPLE };
+  // 以前の版で初期値として保存された架空のサンプルは消しておく
+  if (state.values && state.values.em === 'yamada@example.ac.jp') state.values = null;
+  state.values = state.values || {};
   state.enabled = state.enabled || {};
   state.th = THEMES[state.th] ? state.th : 'navy';
   state.ft = FONTS[state.ft] ? state.ft : 'gothic';
@@ -65,7 +61,7 @@
     const enabled = f.required || state.enabled[f.key] !== false;
     const row = document.createElement('div');
     row.className = 'form-row' + (enabled ? '' : ' off');
-    const input = `<input type="${f.type || 'text'}" id="${id}" data-key="${f.key}">`;
+    const input = `<input type="${f.type || 'text'}" id="${id}" data-key="${f.key}" placeholder="${f.placeholder || ''}">`;
     row.innerHTML = `
       <label class="label" for="${id}">${f.label}${f.required ? '（必須）' : ''}</label>
       <div class="line">
@@ -113,7 +109,7 @@
   $('fonts').addEventListener('change', (e) => { state.ft = e.target.value; update(); });
 
   function sampleName() {
-    return [state.values.ln, state.values.fn].filter(Boolean).join(' ') || '山田 太郎';
+    return [state.values.ln, state.values.fn].filter(Boolean).join(' ') || '山田 花子';
   }
 
   function escapeHtml(s) {
@@ -254,8 +250,17 @@
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !present.hidden) closePresent(); });
 
   // ---- QRコードを使わずに渡す ----------------------------------------------
+  // 氏名が未入力のままでは渡せないので、編集画面の姓の欄へ案内する
+  function requireName(card) {
+    if (card.ln) return true;
+    showTab('edit');
+    $('f-ln').focus();
+    return false;
+  }
+
   $('share-url').addEventListener('click', async () => {
     const card = currentCard();
+    if (!requireName(card)) return;
     const url = receiverUrl(card);
     if (navigator.share) {
       try {
@@ -274,7 +279,9 @@
   });
 
   $('open-receiver').addEventListener('click', () => {
-    window.open(receiverUrl(currentCard()), '_blank');
+    const card = currentCard();
+    if (!requireName(card)) return;
+    window.open(receiverUrl(card), '_blank');
   });
 
   document.querySelectorAll('[data-direct]').forEach((btn) => {
@@ -308,6 +315,8 @@
   // 書体の見本を表示するため、5書体とも読み込んでおく
   Meishi.loadFonts(Object.keys(FONTS), sampleName() + 'ゴシック明朝丸UD').then(update);
   update();
+  // 初めて開いたとき（氏名が未入力）は編集画面から始める
+  if (!state.values.ln) showTab('edit');
 
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     navigator.serviceWorker.register('sw.js').catch(() => {});

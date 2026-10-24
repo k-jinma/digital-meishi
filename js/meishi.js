@@ -10,19 +10,20 @@
 
   // ---- 項目定義 -----------------------------------------------------------
   // key はURLに載せる短縮キー。required の項目は常に掲載する。
-  // labelKey を持つ項目は「代表」「研究室」などの名前を送り手が付けられる。
+  // labelKey を持つ項目は「代表」「直通」などの名前を送り手が付けられる。
+  // placeholder は入力欄に薄く表示する入力例（初期値ではない）。
   const FIELDS = [
-    { key: 'og', label: '会社・組織名' },
-    { key: 'dp', label: '部署（学部・学科など）' },
-    { key: 'tt', label: '役職' },
-    { key: 'ln', label: '姓',         required: true },
-    { key: 'fn', label: '名' },
-    { key: 'lk', label: 'セイ（フリガナ）' },
-    { key: 'fk', label: 'メイ（フリガナ）' },
-    { key: 't1', label: '電話1',      labelKey: 't1l', defaultLabel: '代表' },
-    { key: 't2', label: '電話2',      labelKey: 't2l', defaultLabel: '直通' },
-    { key: 'em', label: 'メール',     type: 'email' },
-    { key: 'ur', label: 'URL',        type: 'url' },
+    { key: 'og', label: '会社・組織名',     placeholder: '例）〇〇株式会社' },
+    { key: 'dp', label: '部署',             placeholder: '例）〇〇部 〇〇課' },
+    { key: 'tt', label: '役職',             placeholder: '例）主任' },
+    { key: 'ln', label: '姓',               placeholder: '例）山田', required: true },
+    { key: 'fn', label: '名',               placeholder: '例）花子' },
+    { key: 'lk', label: 'セイ（フリガナ）', placeholder: '例）ヤマダ' },
+    { key: 'fk', label: 'メイ（フリガナ）', placeholder: '例）ハナコ' },
+    { key: 't1', label: '電話1',            placeholder: '例）03-1234-5678', labelKey: 't1l', defaultLabel: '代表' },
+    { key: 't2', label: '電話2',            placeholder: '例）090-1234-5678', labelKey: 't2l', defaultLabel: '直通' },
+    { key: 'em', label: 'メール',           placeholder: '例）name@example.com', type: 'email' },
+    { key: 'ur', label: 'URL',              placeholder: '例）https://example.com', type: 'url' },
   ];
   const DATA_KEYS = FIELDS.flatMap((f) => (f.labelKey ? [f.key, f.labelKey] : [f.key]));
 
