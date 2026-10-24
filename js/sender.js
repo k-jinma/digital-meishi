@@ -38,6 +38,7 @@
     ['所属', ['og', 'dp', 'tt']],
     ['氏名', ['ln', 'fn', 'lk', 'fk']],
     ['連絡先', ['t1', 't2', 'em', 'ur']],
+    ['所在地', ['zp', 'ad']],
   ];
   // 以前の版で初期値として保存された架空のサンプルは消しておく
   if (state.values && state.values.em === 'yamada@example.ac.jp') state.values = null;

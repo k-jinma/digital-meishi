@@ -24,6 +24,8 @@
     { key: 't2', label: '電話2',            placeholder: '例）090-1234-5678', labelKey: 't2l', defaultLabel: '直通' },
     { key: 'em', label: 'メール',           placeholder: '例）name@example.com', type: 'email' },
     { key: 'ur', label: 'URL',              placeholder: '例）https://example.com', type: 'url' },
+    { key: 'zp', label: '郵便番号',         placeholder: '例）100-0001' },
+    { key: 'ad', label: '住所',             placeholder: '例）東京都千代田区〇〇1-2-3 〇〇ビル5階' },
   ];
   const DATA_KEYS = FIELDS.flatMap((f) => (f.labelKey ? [f.key, f.labelKey] : [f.key]));
 
@@ -204,60 +206,77 @@
 
     const left = pad + 2 * MM;
     const topWidth = rightEdge - left;
-    let y = pad + 3 * MM;
 
-    // 組織名・部署・役職（あるものだけを上から詰めて描く）
-    ctx.fillStyle = INK.sub;
-    [[card.og, 32, 700], [card.dp, 27, 400], [card.tt, 27, 400]].forEach(([text, size, weight]) => {
-      if (!text) return;
-      fitText(ctx, text, topWidth, size, weight);
-      ctx.fillText(text, left, y);
-      y += 4.3 * MM;
-    });
-
-    // フリガナ・氏名
-    const kana = fullKana(card);
-    const nameY = Math.max(y + 7.5 * MM, 24 * MM);
-    if (kana) {
-      ctx.fillStyle = INK.sub;
-      fitText(ctx, kana, topWidth, 24, 400);
-      ctx.fillText(kana, left, nameY - 7 * MM);
-    }
-    ctx.fillStyle = '#111';
-    const name = fullName(card);
-    fitText(ctx, name, topWidth, 72, 700);
-    ctx.fillText(name, left, nameY);
-
-    // 下部：連絡先（左）とQR（右下）
-    const qrSize = 17 * MM;
-    const qrX = CARD_W - pad - qrSize + 1 * MM;
-    const qrY = CARD_H - pad - qrSize + 2 * MM;
-    if (options.qrUrl) drawQr(ctx, options.qrUrl, qrX, qrY, qrSize);
-
+    // 下部に並べる連絡先。住所は長ければ2行に折り返す
     const contacts = [];
     if (card.t1) contacts.push({ label: card.t1l || 'Tel', text: card.t1, uri: telUri(card.t1) });
     if (card.t2) contacts.push({ label: card.t2l || 'Tel', text: card.t2, uri: telUri(card.t2) });
     if (card.em) contacts.push({ label: 'E-mail', text: card.em, uri: 'mailto:' + card.em });
     if (card.ur) contacts.push({ label: 'Web', text: card.ur.replace(/^https?:\/\//, ''), uri: /^https?:\/\//.test(card.ur) ? card.ur : 'https://' + card.ur });
+    const address = fullAddress(card);
+    if (address) contacts.push({ label: '住所', text: address, uri: mapUri(card), wrap: true });
 
-    // ラベル列の幅は一番長いラベルに合わせる
-    const labelFont = `700 22px ${FONT}`;
-    ctx.font = labelFont;
+    const qrSize = 17 * MM;
+    const qrX = CARD_W - pad - qrSize + 1 * MM;
+    const qrY = CARD_H - pad - qrSize + 2 * MM;
+    ctx.font = `700 22px ${FONT}`;
     const labelW = Math.min(12 * MM, Math.max(0, ...contacts.map((c) => ctx.measureText(c.label).width)));
     const tx = left + labelW + 2.5 * MM;
-    const lineH = 4.3 * MM;
     const contactWidth = (options.qrUrl ? qrX - 3 * MM : CARD_W - pad) - tx;
-    let cy = CARD_H - pad + 1 * MM - (contacts.length - 1) * lineH;
+
+    // 連絡先が5行以上になるときは、文字と行間を少し詰めて氏名と重ならないようにする
+    const countLines = (size) => contacts.reduce((n, c) => {
+      c.lines = c.wrap ? wrapText(ctx, c.text, contactWidth, size, 2) : [c.text];
+      return n + c.lines.length;
+    }, 0);
+    const compact = countLines(28) >= 5;
+    const textSize = compact ? 25 : 28;
+    const labelSize = compact ? 20 : 22;
+    const lineH = (compact ? 3.6 : 4.3) * MM;
+    const lineCount = countLines(textSize);
+    const contactsY = CARD_H - pad + 1 * MM - (lineCount - 1) * lineH;
+
+    // 組織名・部署・役職（あるものだけを上から詰めて描く）
+    let y = pad + 3 * MM;
+    ctx.fillStyle = INK.sub;
+    [[card.og, 32, 700], [card.dp, 27, 400], [card.tt, 27, 400]].forEach(([text, size, weight]) => {
+      if (!text) return;
+      fitText(ctx, text, topWidth, size, weight);
+      ctx.fillText(text, left, y);
+      y += (compact ? 3.8 : 4.3) * MM;
+    });
+
+    // フリガナ・氏名
+    const kana = fullKana(card);
+    const nameY = Math.min(
+      Math.max(y + (compact ? 6.5 : 7.5) * MM, (compact ? 22 : 24) * MM),
+      contactsY - textSize - 2 * MM,
+    );
+    if (kana) {
+      ctx.fillStyle = INK.sub;
+      fitText(ctx, kana, topWidth, compact ? 22 : 24, 400);
+      ctx.fillText(kana, left, nameY - (compact ? 6.3 : 7) * MM);
+    }
+    ctx.fillStyle = '#111';
+    const name = fullName(card);
+    fitText(ctx, name, topWidth, compact ? 64 : 72, 700);
+    ctx.fillText(name, left, nameY);
+
+    // 下部：連絡先（左）とQR（右下）
+    if (options.qrUrl) drawQr(ctx, options.qrUrl, qrX, qrY, qrSize);
+    let cy = contactsY;
     contacts.forEach((c) => {
       ctx.fillStyle = INK.label;
-      fitText(ctx, c.label, labelW, 22, 700);
+      fitText(ctx, c.label, labelW, labelSize, 700);
       ctx.fillText(c.label, left, cy);
-      ctx.fillStyle = '#222';
-      const size = fitText(ctx, c.text, contactWidth, 28, 400);
-      ctx.fillText(c.text, tx, cy);
-      const w = ctx.measureText(c.text).width;
-      links.push({ uri: c.uri, x: tx, y: cy - size, w, h: size * 1.3 });
-      cy += lineH;
+      c.lines.forEach((line) => {
+        ctx.fillStyle = '#222';
+        const size = fitText(ctx, line, contactWidth, textSize, 400);
+        ctx.fillText(line, tx, cy);
+        const w = ctx.measureText(line).width;
+        links.push({ uri: c.uri, x: tx, y: cy - size, w, h: size * 1.3 });
+        cy += lineH;
+      });
     });
 
     return links;
@@ -265,6 +284,39 @@
 
   function telUri(tel) {
     return 'tel:' + tel.replace(/[^\d+]/g, '');
+  }
+
+  function fullAddress(card) {
+    return [card.zp ? '〒' + card.zp : '', card.ad].filter(Boolean).join(' ');
+  }
+
+  // PDFで住所をタップしたときに開く地図検索（開いたときだけ地図サービスに住所が送られる）
+  function mapUri(card) {
+    return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(card.ad || card.zp);
+  }
+
+  // 幅に収まるよう maxLines 行まで折り返す。空白の位置で切れるならそこで切る
+  function wrapText(ctx, text, maxWidth, size, maxLines) {
+    ctx.font = `400 ${size}px ${FONT}`;
+    if (ctx.measureText(text).width <= maxWidth) return [text];
+    const lines = [];
+    let cur = '';
+    for (const ch of text) {
+      if (lines.length < maxLines - 1 && cur && ctx.measureText(cur + ch).width > maxWidth) {
+        const sp = cur.lastIndexOf(' ');
+        if (sp > cur.length * 0.4) {
+          lines.push(cur.slice(0, sp));
+          cur = cur.slice(sp + 1) + ch;
+        } else {
+          lines.push(cur);
+          cur = ch === ' ' ? '' : ch;
+        }
+      } else {
+        cur += ch;
+      }
+    }
+    lines.push(cur);
+    return lines;
   }
 
   // ---- 出力ファイル生成 ---------------------------------------------------
@@ -283,7 +335,7 @@
   }
 
   // vCard 3.0。フリガナは iOS / Android 双方が読む X-PHONETIC-* で入れ、
-  // 電話の「代表」「研究室」などは iOS の独自ラベル（X-ABLabel）として付ける
+  // 電話の「代表」「直通」などは iOS の独自ラベル（X-ABLabel）として付ける
   function makeVcard(card) {
     const esc = (s) => String(s).replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/([,;])/g, '\\$1');
     const lines = [
@@ -303,6 +355,8 @@
     });
     if (card.em) lines.push(`EMAIL;TYPE=INTERNET,WORK:${card.em}`);
     if (card.ur) lines.push(`URL:${card.ur}`);
+    // 日本の住所は番地などに分けられないので、まとめて「番地」欄に入れる
+    if (card.zp || card.ad) lines.push(`ADR;TYPE=WORK:;;${esc(card.ad || '')};;;${esc(card.zp || '')};`);
     lines.push('END:VCARD');
     return lines.join('\r\n') + '\r\n';
   }
