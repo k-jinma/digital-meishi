@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>デジタル名刺</title>
+  <meta name="theme-color" content="#1f3a5f">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="app has-tabbar">
+
+  <!-- ===== 名刺を渡す ===== -->
+  <div id="tab-present" role="tabpanel" aria-labelledby="tabbtn-present">
+    <header class="app-header">
+      <h1>名刺を渡す</h1>
+      <p>対面では、QRコード付きの名刺を横向きで見せます</p>
+    </header>
+
+    <div class="block card-area on-surface stack">
+      <canvas id="preview" class="card-preview" aria-label="名刺のプレビュー"></canvas>
+      <button type="button" class="btn primary block-btn" id="open-present">名刺を見せる（横向き表示）</button>
+      <p class="caption" style="text-align:left">スマホを横にして相手に向けると、名刺とQRコードが並んで表示されます。相手はQRコードを読み取って保存方法を選びます。</p>
+    </div>
+
+    <h2 class="section-title">QRコードを使わずに渡す</h2>
+    <button type="button" class="row-btn" id="share-url">
+      <span class="text">
+        <span class="title">URLを送信</span>
+        <span class="desc">LINE・メールなどで受け取りページのURLを送ります。オンライン会議など、対面でないときに使います。</span>
+      </span>
+      <svg class="chevron" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 3l5 5-5 5" stroke="#5A6270" stroke-width="1.6"/></svg>
+    </button>
+    <div class="block">
+      <div class="strong">ファイルを直接送信</div>
+      <p class="caption">AirDrop・クイック共有などでファイルそのものを渡します。顔写真・ロゴ入りで渡せます。</p>
+      <div class="btn-row" style="margin-top:10px">
+        <button type="button" class="btn" data-direct="png">PNG</button>
+        <button type="button" class="btn" data-direct="pdf">PDF</button>
+        <button type="button" class="btn" data-direct="vcf">vCard</button>
+      </div>
+      <p id="direct-status" class="status" role="status"></p>
+    </div>
+
+    <h2 class="section-title">確認</h2>
+    <button type="button" class="row-btn" id="open-receiver">
+      <span class="text">
+        <span class="title">受け手画面のプレビュー</span>
+        <span class="desc">相手がQRコードを読み取ったときに表示される画面を確認します。</span>
+      </span>
+      <svg class="chevron" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 3l5 5-5 5" stroke="#5A6270" stroke-width="1.6"/></svg>
+    </button>
+  </div>
+
+  <!-- ===== 名刺の編集 ===== -->
+  <div id="tab-edit" role="tabpanel" aria-labelledby="tabbtn-edit" hidden>
+    <header class="app-header">
+      <h1>名刺の編集</h1>
+      <p>チェックを外した項目は名刺・QRコードに掲載されません</p>
+    </header>
+
+    <div class="card-area">
+      <canvas id="edit-preview" class="card-preview" aria-label="名刺のプレビュー"></canvas>
+    </div>
+
+    <form id="form" autocomplete="on" onsubmit="return false"></form>
+
+    <h2 class="section-title">名刺のデザイン</h2>
+    <div class="block stack">
+      <div>
+        <span class="label">左ラインの色</span>
+        <div class="swatches" id="themes" role="radiogroup" aria-label="左ラインの色"></div>
+      </div>
+      <div>
+        <span class="label">書体</span>
+        <div class="font-list" id="fonts" role="radiogroup" aria-label="書体"></div>
+      </div>
+      <div class="form-row">
+        <span class="label" style="padding-left:0">顔写真・ロゴ（任意）</span>
+        <div class="line">
+          <input type="checkbox" id="use-photo" aria-label="顔写真・ロゴを載せる">
+          <label class="btn" style="flex:1">
+            画像を選択
+            <input type="file" id="photo" accept="image/*" hidden>
+          </label>
+        </div>
+        <p class="caption" style="margin-top:4px">写真・ロゴは「ファイルを直接送信」で渡すときだけ名刺に入ります（QRコードのURLには入りません）。</p>
+      </div>
+      <details>
+        <summary>受け取りページのURL設定</summary>
+        <div class="form-row" style="margin-top:8px">
+          <label class="label" style="padding-left:0" for="base-url">公開している card.html のURL（空欄なら同じ場所）</label>
+          <input type="url" id="base-url" class="input" style="width:100%" placeholder="https://example.github.io/digital-meishi/card.html">
+        </div>
+      </details>
+    </div>
+
+    <div class="block">
+      <button type="button" class="btn primary block-btn" id="save">保存する</button>
+      <p class="caption" style="margin-top:8px">入力内容はこの端末内にだけ保存されます。</p>
+    </div>
+  </div>
+
+  <nav class="tabbar" role="tablist">
+    <button type="button" role="tab" id="tabbtn-present" aria-controls="tab-present" aria-selected="true">名刺を渡す</button>
+    <button type="button" role="tab" id="tabbtn-edit" aria-controls="tab-edit" aria-selected="false">名刺を編集</button>
+  </nav>
+</div>
+
+<!-- ===== 名刺を見せる（横向き） ===== -->
+<div class="present" id="present" hidden role="dialog" aria-label="名刺を見せる">
+  <div class="stage">
+    <div class="stage-card"><canvas id="present-card" aria-label="名刺"></canvas></div>
+    <div class="qr-panel">
+      <canvas id="present-qr" width="600" height="600" aria-label="名刺受け取り用QRコード"></canvas>
+      <div class="strong">QRを読み取って保存</div>
+      <p class="caption">画像・PDF・連絡先から保存方法を選べます（アプリ不要）</p>
+      <div class="btn-row">
+        <button type="button" class="btn" id="flip">180°回転</button>
+        <button type="button" class="btn" id="close-present">閉じる</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="vendor/qrcode.js"></script>
+<script src="vendor/pdf-lib.min.js"></script>
+<script src="js/meishi.js"></script>
+<script src="js/sender.js"></script>
+</body>
+</html>
