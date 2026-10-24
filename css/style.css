@@ -173,8 +173,27 @@ body {
 a.btn { text-decoration: none; }
 
 /* 横向き表示のQRパネル内の安心表示 */
-.present .safe-note { display: flex; align-items: center; gap: 4px; justify-content: center; font-size: 11px; line-height: 15px; color: var(--primary); font-weight: 500; }
-.present .safe-note svg { flex: none; width: 14px; height: 14px; }
+.present .qr-title { font-size: 16px; line-height: 22px; font-weight: 700; color: var(--text); }
+.present .qr-sub { margin: 0; font-size: 12px; line-height: 17px; font-weight: 500; color: var(--text); }
+.present .qr-sub span { display: inline-block; } /* 語の途中で改行しない */
+/* いちばん目立たせる安心表示：紺地に白文字の帯 */
+.present .safe-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin: 2px 0;
+  padding: 8px 10px;
+  background: var(--primary);
+  color: var(--on-dark);
+  border-radius: var(--r-md);
+  text-align: left;
+  font-size: 12px;
+  line-height: 17px;
+}
+.present .safe-badge svg { flex: none; width: 22px; height: 22px; }
+.present .safe-badge strong { display: block; font-size: 14px; line-height: 19px; font-weight: 700; }
+.present .safe-badge strong span { display: inline-block; }
 
 /* ---- 入力行 ---- */
 .form-row .label { padding-left: 30px; margin-bottom: 4px; }
@@ -290,6 +309,13 @@ details summary { cursor: pointer; font-size: 12px; color: var(--text-2); }
   border-radius: var(--r-md);
   text-align: center;
 }
-.present .qr-panel canvas { width: 100%; height: auto; max-height: 40vmin; object-fit: contain; image-rendering: pixelated; }
+.present .qr-panel canvas { width: 100%; height: auto; max-height: 36vmin; object-fit: contain; image-rendering: pixelated; }
 .present .qr-panel .btn-row { width: 100%; }
 .present .qr-panel .btn { min-height: 40px; padding: 0 8px; font-size: 14px; }
+
+/* 小さい画面（iPhone SE の横向きなど）ではQRとボタンを詰めて、すべて画面に収める */
+@media (orientation: landscape) and (max-height: 400px), (orientation: portrait) and (max-width: 400px) {
+  .present .qr-panel { gap: 4px; padding: 10px; }
+  .present .qr-panel canvas { max-height: 30vmin; }
+  .present .qr-panel .btn { min-height: 36px; }
+}

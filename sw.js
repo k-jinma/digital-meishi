@@ -1,5 +1,5 @@
 /* sw.js — 送り手アプリをオフライン（展示会場など）でも開けるようにキャッシュする */
-const CACHE = 'meishi-v9';
+const CACHE = 'meishi-v11';
 const FONT_CACHE = 'meishi-fonts-v1';
 const ASSETS = [
   './', './index.html', './card.html', './css/style.css',
