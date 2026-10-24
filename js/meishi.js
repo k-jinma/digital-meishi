@@ -19,8 +19,8 @@
     { key: 'fn', label: '名' },
     { key: 'lk', label: 'セイ（フリガナ）' },
     { key: 'fk', label: 'メイ（フリガナ）' },
-    { key: 't1', label: '電話1',      type: 'tel', labelKey: 't1l', defaultLabel: '代表' },
-    { key: 't2', label: '電話2',      type: 'tel', labelKey: 't2l', defaultLabel: '直通' },
+    { key: 't1', label: '電話1',      labelKey: 't1l', defaultLabel: '代表' },
+    { key: 't2', label: '電話2',      labelKey: 't2l', defaultLabel: '直通' },
     { key: 'em', label: 'メール',     type: 'email' },
     { key: 'ur', label: 'URL',        type: 'url' },
   ];

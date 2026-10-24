@@ -65,8 +65,7 @@
     const enabled = f.required || state.enabled[f.key] !== false;
     const row = document.createElement('div');
     row.className = 'form-row' + (enabled ? '' : ' off');
-    const input = `<input type="${f.type || 'text'}" id="${id}" data-key="${f.key}"
-             ${f.type === 'tel' ? 'inputmode="tel"' : ''}>`;
+    const input = `<input type="${f.type || 'text'}" id="${id}" data-key="${f.key}">`;
     row.innerHTML = `
       <label class="label" for="${id}">${f.label}${f.required ? '（必須）' : ''}</label>
       <div class="line">
