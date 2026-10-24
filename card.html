@@ -17,6 +17,19 @@
     <p>アプリのインストール・登録は不要です</p>
   </header>
 
+  <!-- 受け取る人が安心できるよう、データの扱いを最初に伝える -->
+  <section class="trust" aria-label="データの取り扱い">
+    <svg class="trust-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="1.5" stroke="#1F3A5F" stroke-width="1.8"/><path d="M8.5 10.5V7.5a3.5 3.5 0 0 1 7 0v3" stroke="#1F3A5F" stroke-width="1.8"/><circle cx="12" cy="15.5" r="1.4" fill="#1F3A5F"/></svg>
+    <div>
+      <p class="trust-title">名刺の情報はクラウドに保存されません</p>
+      <ul class="trust-list">
+        <li>名刺の情報はQRコードに入っており、送り主のスマホからあなたのスマホへ直接届きます。</li>
+        <li>サーバーやクラウドに名刺の情報が送信・保存されることはありません。</li>
+        <li>受け取るのに、あなたの連絡先の入力や会員登録は必要ありません。</li>
+      </ul>
+    </div>
+  </section>
+
   <div class="card-area">
     <canvas id="card" class="card-preview" aria-label="受け取った名刺"></canvas>
   </div>
@@ -57,8 +70,22 @@
   </div>
 
   <div class="notice-area">
-    <p class="notice">この名刺のデータはURLの「#」以降にのみ含まれ、サーバーには送信・保存されません。保存したファイルはお使いの端末内にのみ残ります。</p>
+    <p class="notice">保存したファイルは、お使いの端末の中にだけ残ります。不要になったら、写真やファイルを削除するだけで消せます。</p>
   </div>
+
+  <!-- アプリの紹介 -->
+  <section class="promo" aria-labelledby="promo-title">
+    <p class="promo-kicker">このデジタル名刺について</p>
+    <h2 class="promo-title" id="promo-title">あなたの名刺も、スマホで渡せます</h2>
+    <p class="promo-lead">受け取る人が「画像・PDF・連絡先」から保存方法を選べる、個人情報を預けないデジタル名刺です。</p>
+    <ul class="promo-points">
+      <li><strong>登録不要・無料</strong><span>アカウント作成なしで、すぐに自分の名刺を作れます。</span></li>
+      <li><strong>クラウドに預けない</strong><span>名刺の情報は自分のスマホの中だけ。渡すときもQRコードで直接届きます。</span></li>
+      <li><strong>相手に選んでもらえる</strong><span>連絡先に登録したくない人には、画像やPDFで受け取ってもらえます。</span></li>
+      <li><strong>見やすい横向き表示</strong><span>名刺とQRコードを並べて見せられます。色や書体も選べます。</span></li>
+    </ul>
+    <a class="btn primary block-btn" id="promo-link" href="index.html">自分のデジタル名刺を作る</a>
+  </section>
 </div>
 
 <script src="vendor/qrcode.js"></script>

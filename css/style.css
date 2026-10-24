@@ -141,6 +141,41 @@ body {
 }
 .notice-area { padding: 16px; }
 
+/* ---- データの取り扱い（受け手への説明） ---- */
+.trust {
+  display: flex;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--info-bg);
+  border-bottom: 1px solid var(--border);
+}
+.trust-icon { flex: none; width: 24px; height: 24px; margin-top: 1px; }
+.trust-title { margin: 0 0 4px; font-size: 14px; line-height: 20px; font-weight: 700; color: var(--primary); }
+.trust-list { margin: 0; padding-left: 1.1em; font-size: 12px; line-height: 18px; color: var(--text); }
+.trust-list li + li { margin-top: 2px; }
+
+/* ---- アプリの紹介 ---- */
+.promo {
+  margin: 8px 16px 32px;
+  padding: 20px 16px 16px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--primary);
+  border-radius: var(--r-md);
+}
+.promo-kicker { margin: 0; font-size: 11px; font-weight: 500; color: var(--text-2); }
+.promo-title { margin: 2px 0 6px; font-size: 17px; line-height: 24px; font-weight: 700; }
+.promo-lead { margin: 0 0 12px; font-size: 13px; line-height: 20px; color: var(--text-2); }
+.promo-points { margin: 0 0 16px; padding: 0; list-style: none; border-top: 1px solid var(--border); }
+.promo-points li { padding: 8px 0; border-bottom: 1px solid var(--border); }
+.promo-points strong { display: block; font-size: 14px; line-height: 20px; font-weight: 700; }
+.promo-points span { display: block; font-size: 12px; line-height: 18px; color: var(--text-2); }
+a.btn { text-decoration: none; }
+
+/* 横向き表示のQRパネル内の安心表示 */
+.present .safe-note { display: flex; align-items: center; gap: 4px; justify-content: center; font-size: 11px; line-height: 15px; color: var(--primary); font-weight: 500; }
+.present .safe-note svg { flex: none; width: 14px; height: 14px; }
+
 /* ---- 入力行 ---- */
 .form-row .label { padding-left: 30px; margin-bottom: 4px; }
 .form-row .line { display: flex; align-items: center; gap: 12px; }
@@ -248,13 +283,13 @@ details summary { cursor: pointer; font-size: 12px; color: var(--text-2); }
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 14px;
+  gap: 6px;
+  padding: 12px;
   background: var(--bg-surface);
   border: 1px solid var(--border);
   border-radius: var(--r-md);
   text-align: center;
 }
-.present .qr-panel canvas { width: 100%; height: auto; max-height: 52vmin; object-fit: contain; image-rendering: pixelated; }
+.present .qr-panel canvas { width: 100%; height: auto; max-height: 40vmin; object-fit: contain; image-rendering: pixelated; }
 .present .qr-panel .btn-row { width: 100%; }
 .present .qr-panel .btn { min-height: 40px; padding: 0 8px; font-size: 14px; }
