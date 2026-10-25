@@ -13,12 +13,11 @@
 ```
 index.html        送り手画面（PWA）：「名刺を渡す」「名刺を編集」の2タブと、横向きで名刺を見せる画面
 card.html         受け手画面：URLの # 以降から名刺を復元し、保存形式を選ばせる
-js/config.js      設定（Web版は空。アプリ版はビルド時に生成）
+js/config.js      設定（Web版は空。アプリ版はビルド時に生成する）
 js/meishi.js      共通ロジック（エンコード、Canvas描画、PNG/PDF/vCard生成、共有）
 js/sender.js      送り手画面の処理
 js/receiver.js    受け手画面の処理
 sw.js             オフライン用 Service Worker
-app/              送り手用アプリ（Capacitor）
 vendor/           pdf-lib 1.17.1, qrcode-generator 1.4.4（MIT）
 ```
 
@@ -37,7 +36,7 @@ vendor/           pdf-lib 1.17.1, qrcode-generator 1.4.4（MIT）
 
 ## アプリ版（iOS / Android）
 
-送り手用のアプリは `app/` にあります（Capacitor）。書体を同梱し、送り手側はネット接続なしで動きます。名刺を見せる画面の横向き固定や画面の明るさ調整など、アプリならではの機能も使えます。ビルド方法は [app/README.md](app/README.md) を見てください。
+送り手用のアプリは別リポジトリ [digital-meishi-app](https://github.com/k-jinma/digital-meishi-app) で管理しています（Capacitor）。このリポジトリをサブモジュールとして取り込み、名刺の描画処理などを共有します。そのため `js/` のコードには、アプリの中で動くときだけ使う処理（横向き固定、画面の明るさ、共有シートなど）も含まれています。
 
 ## 動かし方
 
