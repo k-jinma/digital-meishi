@@ -175,7 +175,7 @@ a.btn { text-decoration: none; }
 /* 横向き表示のQRパネル内の安心表示 */
 .present .qr-title { font-size: 16px; line-height: 22px; font-weight: 700; color: var(--text); }
 .present .qr-sub { margin: 0; font-size: 12px; line-height: 17px; font-weight: 500; color: var(--text); }
-.present .qr-sub span { display: inline-block; } /* 語の途中で改行しない */
+.present .qr-sub span, .present .qr-title span { display: inline-block; } /* 語の途中で改行しない */
 /* いちばん目立たせる安心表示：紺地に白文字の帯 */
 .present .safe-badge {
   display: flex;
@@ -293,8 +293,22 @@ details summary { cursor: pointer; font-size: 12px; color: var(--text-2); }
   .present .stage { width: 100vh; width: 100dvh; height: 100vw; transform: translateX(100vw) rotate(90deg); }
   .present.flip .stage { transform: translateY(100vh) rotate(-90deg); transform: translateY(100dvh) rotate(-90deg); }
 }
-.present .stage-card { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; justify-content: center; height: 100%; }
-.present .stage-card canvas { max-width: 100%; max-height: 100%; width: auto; height: auto; }
+.present .stage-card { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; height: 100%; }
+.present .stage-card canvas { max-width: 100%; max-height: calc(100% - 46px); width: auto; height: auto; min-height: 0; }
+/* 受け取り方の切り替え（相手がオフラインのときは連絡先QRにする） */
+.present .mode-toggle {
+  appearance: none;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: 18px;
+  background: var(--bg-surface);
+  color: var(--text-2);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.present .mode-toggle[aria-pressed="true"] { border-color: var(--primary); color: var(--primary); font-weight: 500; }
 .present .qr-panel {
   flex: 0 0 auto;
   width: min(34%, 260px);

@@ -1,9 +1,9 @@
 /* sw.js — 送り手アプリをオフライン（展示会場など）でも開けるようにキャッシュする */
-const CACHE = 'meishi-v11';
+const CACHE = 'meishi-v12';
 const FONT_CACHE = 'meishi-fonts-v1';
 const ASSETS = [
   './', './index.html', './card.html', './css/style.css',
-  './js/meishi.js', './js/sender.js', './js/receiver.js',
+  './js/config.js', './js/meishi.js', './js/sender.js', './js/receiver.js',
   './vendor/qrcode.js', './vendor/pdf-lib.min.js',
   './manifest.webmanifest', './icons/icon.svg',
 ];

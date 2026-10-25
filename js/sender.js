@@ -164,7 +164,8 @@
   }
 
   function receiverUrl(card) {
-    const base = state.baseUrl || new URL('card.html', location.href).href;
+    // アプリでは受け取りページの公開URL（config.js）を使う
+    const base = state.baseUrl || Meishi.CONFIG.receiverBase || new URL('card.html', location.href).href;
     return base.split('#')[0] + '#' + Meishi.encodeCard(card);
   }
 
@@ -202,6 +203,20 @@
   // ---- 名刺を見せる（横向き表示） -----------------------------------------
   const present = $('present');
   let wakeLock = null;
+  let savedBrightness = null;
+  let qrMode = 'url'; // url：受け取りページ（保存方法を選べる） / vcard：連絡先QR（ネット接続不要）
+
+  // QRと説明文を、受け取り方に合わせて切り替える
+  function renderPresentQr(card) {
+    const offline = qrMode === 'vcard';
+    Meishi.renderQrCanvas($('present-qr'), offline ? Meishi.makeVcard(card) : receiverUrl(card));
+    $('qr-title').innerHTML = offline ? '<span>カメラで読み取って</span><span>連絡先に追加</span>' : 'QRを読み取って保存';
+    $('qr-sub').innerHTML = offline
+      ? '<span>ネット接続なしで使えます</span><span>（連絡先への追加のみ）</span>'
+      : '<span>画像・PDF・連絡先から</span><span>保存方法を選べます</span><span>（アプリ・登録不要）</span>';
+    $('qr-mode').textContent = offline ? '通常のQRに戻す' : '相手がオフラインのとき';
+    $('qr-mode').setAttribute('aria-pressed', String(offline));
+  }
 
   $('open-present').addEventListener('click', async () => {
     const card = currentCard();
@@ -212,12 +227,43 @@
     await Meishi.loadFonts([card.ft], Meishi.cardText(card));
     // 名刺側にはQRを入れず、読み取る場所を右側の1つにする
     Meishi.drawCard($('present-card'), card, { photo: state.usePhoto ? photoImg : null });
-    Meishi.renderQrCanvas($('present-qr'), receiverUrl(card));
+    qrMode = 'url';
+    renderPresentQr(card);
     present.classList.remove('flip');
     present.hidden = false;
+    if (Meishi.isNative) await enterPresentNative();
+    else await enterPresentWeb();
+  });
 
-    // Android では全画面にして横向きに固定できる。iPhone は固定できないので、
-    // 縦持ちのときは CSS で表示を90°回して対応する
+  // アプリ：横向きに固定し、画面を最大の明るさにしてQRを読み取りやすくし、スリープさせない
+  async function enterPresentNative() {
+    const orientation = Meishi.plugin('ScreenOrientation');
+    const brightness = Meishi.plugin('ScreenBrightness');
+    const keepAwake = Meishi.plugin('KeepAwake');
+    await Promise.all([
+      orientation && orientation.lock({ orientation: 'landscape' }).catch(() => {}),
+      brightness && brightness.getBrightness()
+        .then(({ brightness: b }) => { savedBrightness = b; return brightness.setBrightness({ brightness: 1 }); })
+        .catch(() => {}),
+      keepAwake && keepAwake.keepAwake().catch(() => {}),
+    ]);
+  }
+
+  async function leavePresentNative() {
+    const orientation = Meishi.plugin('ScreenOrientation');
+    const brightness = Meishi.plugin('ScreenBrightness');
+    const keepAwake = Meishi.plugin('KeepAwake');
+    await Promise.all([
+      orientation && orientation.lock({ orientation: 'portrait' }).catch(() => {}),
+      brightness && savedBrightness !== null && brightness.setBrightness({ brightness: savedBrightness }).catch(() => {}),
+      keepAwake && keepAwake.allowSleep().catch(() => {}),
+    ]);
+    savedBrightness = null;
+  }
+
+  // Web版：Android では全画面にして横向きに固定できる。iPhone は固定できないので、
+  // 縦持ちのときは CSS で表示を90°回して対応する
+  async function enterPresentWeb() {
     try {
       if (document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen();
       if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape');
@@ -230,12 +276,9 @@
     } catch (e) {
       wakeLock = null;
     }
-  });
+  }
 
-  $('flip').addEventListener('click', () => present.classList.toggle('flip'));
-
-  async function closePresent() {
-    present.hidden = true;
+  async function leavePresentWeb() {
     try {
       if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock();
       if (document.fullscreenElement) await document.exitFullscreen();
@@ -246,6 +289,18 @@
       wakeLock.release().catch(() => {});
       wakeLock = null;
     }
+  }
+
+  $('flip').addEventListener('click', () => present.classList.toggle('flip'));
+  $('qr-mode').addEventListener('click', () => {
+    qrMode = qrMode === 'url' ? 'vcard' : 'url';
+    renderPresentQr(currentCard());
+  });
+
+  async function closePresent() {
+    present.hidden = true;
+    if (Meishi.isNative) await leavePresentNative();
+    else await leavePresentWeb();
   }
   $('close-present').addEventListener('click', closePresent);
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !present.hidden) closePresent(); });
@@ -263,6 +318,10 @@
     const card = currentCard();
     if (!requireName(card)) return;
     const url = receiverUrl(card);
+    if (Meishi.isNative) {
+      await Meishi.plugin('Share').share({ title: `${Meishi.fullName(card)} の名刺`, url }).catch(() => {});
+      return;
+    }
     if (navigator.share) {
       try {
         await navigator.share({ title: `${Meishi.fullName(card)} の名刺`, url });
@@ -316,10 +375,16 @@
   // 書体の見本を表示するため、5書体とも読み込んでおく
   Meishi.loadFonts(Object.keys(FONTS), sampleName() + 'ゴシック明朝丸UD').then(update);
   update();
+  // アプリでは通常の画面を縦向きに固定する（横向きは名刺を見せるときだけ）
+  if (Meishi.isNative) {
+    const orientation = Meishi.plugin('ScreenOrientation');
+    if (orientation) orientation.lock({ orientation: 'portrait' }).catch(() => {});
+  }
   // 初めて開いたとき（氏名が未入力）は編集画面から始める
   if (!state.values.ln) showTab('edit');
 
-  if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  // オフライン対応の Service Worker は Web版だけ（アプリは最初から端末内にある）
+  if (!Meishi.isNative && 'serviceWorker' in navigator && location.protocol !== 'file:') {
     navigator.serviceWorker.register('sw.js').catch(() => {});
   }
 })();

@@ -13,10 +13,12 @@
 ```
 index.html        送り手画面（PWA）：「名刺を渡す」「名刺を編集」の2タブと、横向きで名刺を見せる画面
 card.html         受け手画面：URLの # 以降から名刺を復元し、保存形式を選ばせる
+js/config.js      設定（Web版は空。アプリ版はビルド時に生成）
 js/meishi.js      共通ロジック（エンコード、Canvas描画、PNG/PDF/vCard生成、共有）
 js/sender.js      送り手画面の処理
 js/receiver.js    受け手画面の処理
 sw.js             オフライン用 Service Worker
+app/              送り手用アプリ（Capacitor）
 vendor/           pdf-lib 1.17.1, qrcode-generator 1.4.4（MIT）
 ```
 
@@ -32,6 +34,10 @@ vendor/           pdf-lib 1.17.1, qrcode-generator 1.4.4（MIT）
 - **左ラインの色と書体**：色は紺・緑・えんじ・ローズ・藤の5色、書体はゴシック（Noto Sans JP）・明朝（Noto Serif JP）・丸ゴシック（Zen Maru Gothic）・UDゴシック（BIZ UDPGothic）・UD明朝（BIZ UDPMincho）の5書体。どちらもURLに入るので、受け手側の名刺も同じ見た目になります。
 - **書体はGoogle Fontsから読み込む**：端末に無い書体でも同じ見た目で描くためです。このとき書体ファイルの取得でGoogleのサーバーに接続しますが、送るのは書体の要求だけで、名刺データ（URLの `#` 以降）は含まれません。受け取りページは `Referrer-Policy: no-referrer` にしています。読み込めないときは端末の書体で描きます。一度読み込んだ書体はService Workerが保存するので、次回からはオフラインでも使えます。
 - **デザイン**：Figmaのカンプ「デジタル名刺 デザインカンプ」の色・余白・文字スタイルに合わせています。
+
+## アプリ版（iOS / Android）
+
+送り手用のアプリは `app/` にあります（Capacitor）。書体を同梱し、送り手側はネット接続なしで動きます。名刺を見せる画面の横向き固定や画面の明るさ調整など、アプリならではの機能も使えます。ビルド方法は [app/README.md](app/README.md) を見てください。
 
 ## 動かし方
 

@@ -8,6 +8,16 @@
 (function (global) {
   'use strict';
 
+  const CONFIG = global.MEISHI_CONFIG || {};
+
+  // アプリ（Capacitor）の中で動いているか。ネイティブ機能はアプリのときだけ使う
+  const isNative = !!(global.Capacitor && global.Capacitor.isNativePlatform && global.Capacitor.isNativePlatform());
+  function plugin(name) {
+    const cap = global.Capacitor;
+    if (!isNative) return null;
+    return (cap.Plugins && cap.Plugins[name]) || (cap.registerPlugin ? cap.registerPlugin(name) : null);
+  }
+
   // ---- 項目定義 -----------------------------------------------------------
   // key はURLに載せる短縮キー。required の項目は常に掲載する。
   // labelKey を持つ項目は「代表」「直通」などの名前を送り手が付けられる。
@@ -88,6 +98,9 @@
 
   // ---- QR -----------------------------------------------------------------
   // QRのモジュールを ctx の (x, y) から size 四方に描く
+  // 日本語を含む vCard もQRにできるよう、文字列は UTF-8 で符号化する
+  qrcode.stringToBytes = qrcode.stringToBytesFuncs['UTF-8'];
+
   function drawQr(ctx, text, x, y, size) {
     const qr = qrcode(0, 'M');
     qr.addData(text);
@@ -133,12 +146,21 @@
     const need = keys.filter((k) => FONTS[k] && !requestedFonts.has(k));
     if (need.length) {
       need.forEach((k) => requestedFonts.add(k));
-      const families = need.map((k) => 'family=' + FONTS[k].family.replace(/ /g, '+') + ':wght@400;700').join('&');
-      const link = document.createElement('link');
-      link.rel = 'stylesheet';
-      link.href = `https://fonts.googleapis.com/css2?${families}&display=swap`;
-      document.head.appendChild(link);
-      await new Promise((resolve) => { link.onload = link.onerror = resolve; });
+      // アプリでは同梱した書体を使い、ネットに接続しない
+      const local = CONFIG.localFonts || {};
+      const hrefs = need.filter((k) => local[k]).map((k) => local[k]);
+      const remote = need.filter((k) => !local[k]);
+      if (remote.length) {
+        const families = remote.map((k) => 'family=' + FONTS[k].family.replace(/ /g, '+') + ':wght@400;700').join('&');
+        hrefs.push(`https://fonts.googleapis.com/css2?${families}&display=swap`);
+      }
+      await Promise.all(hrefs.map((href) => {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = href;
+        document.head.appendChild(link);
+        return new Promise((resolve) => { link.onload = link.onerror = resolve; });
+      }));
     }
     try {
       await Promise.all(keys.flatMap((k) => FONTS[k]
@@ -402,6 +424,7 @@
   // 共有シートが使える端末ではそれを開き（写真・ファイルへ保存、AirDrop等）、
   // 使えない端末ではダウンロードに切り替える
   async function shareOrDownload(blob, fileName, title) {
+    if (isNative) return shareNative(blob, fileName, title);
     const file = new File([blob], fileName, { type: blob.type });
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       try {
@@ -413,6 +436,26 @@
     }
     download(blob, fileName);
     return 'downloaded';
+  }
+
+  // アプリでは一時フォルダにファイルを書き出し、端末の共有シートで渡す
+  // （写真への保存、ファイルへの保存、AirDrop・クイック共有を選べる）
+  async function shareNative(blob, fileName, title) {
+    const Filesystem = plugin('Filesystem');
+    const Share = plugin('Share');
+    const data = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result).split(',')[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+    const { uri } = await Filesystem.writeFile({ path: fileName, data, directory: 'CACHE' });
+    try {
+      await Share.share({ title, files: [uri] });
+      return 'shared';
+    } catch (e) {
+      return 'cancelled';
+    }
   }
 
   function download(blob, fileName) {
@@ -427,6 +470,7 @@
   }
 
   global.Meishi = {
+    CONFIG, isNative, plugin,
     FIELDS, THEMES, FONTS, loadFonts, cardText, encodeCard, decodeCard, fullName, renderQrCanvas,
     drawCard, canvasToPngBlob, makeVcard, makePdf, baseFileName,
     shareOrDownload, download,
