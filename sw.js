@@ -1,11 +1,12 @@
 /* sw.js — 送り手アプリをオフライン（展示会場など）でも開けるようにキャッシュする */
-const CACHE = 'meishi-v13';
+const CACHE = 'meishi-v14';
 const FONT_CACHE = 'meishi-fonts-v1';
 const ASSETS = [
   './', './index.html', './card.html', './css/style.css',
   './js/config.js', './js/meishi.js', './js/sender.js', './js/receiver.js',
   './vendor/qrcode.js', './vendor/pdf-lib.min.js',
-  './manifest.webmanifest', './icons/icon.svg',
+  './manifest.webmanifest', './icons/icon.svg', './icons/apple-touch-icon.png',
+  './icons/icon-192.png', './icons/icon-512.png',
 ];
 
 self.addEventListener('install', (e) => {
