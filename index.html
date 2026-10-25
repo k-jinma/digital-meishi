@@ -101,6 +101,19 @@
       <button type="button" class="btn primary block-btn" id="save">保存する</button>
       <p class="caption" style="margin-top:8px">入力内容はこの端末内にだけ保存されます。</p>
     </div>
+
+    <h2 class="section-title">バックアップ</h2>
+    <div class="block">
+      <p class="caption">入力内容（写真・色・書体を含む）を1つのファイルに書き出し、機種変更のときなどに別の端末で復元できます。ファイルには名刺の情報がそのまま入っているので、取り扱いに注意してください。</p>
+      <div class="btn-row" style="margin-top:10px">
+        <button type="button" class="btn" id="backup-export">書き出す</button>
+        <label class="btn" id="backup-import-label">
+          復元する
+          <input type="file" id="backup-import" accept=".json,application/json" hidden>
+        </label>
+      </div>
+      <p id="backup-status" class="status" role="status"></p>
+    </div>
   </div>
 
   <nav class="tabbar" role="tablist">

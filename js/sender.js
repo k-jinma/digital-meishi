@@ -200,6 +200,74 @@
   $('tabbtn-edit').addEventListener('click', () => showTab('edit'));
   $('save').addEventListener('click', () => { save(); showTab('present'); });
 
+  // ---- バックアップ（書き出しと復元） ---------------------------------------
+  // 端末内の保存データ（state）をそのままファイルにする。サーバーには送らない
+  const BACKUP_APP = 'digital-meishi';
+  const backupStatus = $('backup-status');
+
+  $('backup-export').addEventListener('click', async () => {
+    const d = new Date();
+    const ymd = [d.getFullYear(), d.getMonth() + 1, d.getDate()].map((n) => String(n).padStart(2, '0')).join('');
+    const data = { app: BACKUP_APP, version: 1, savedAt: d.toISOString(), state };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    try {
+      const result = await Meishi.shareOrDownload(blob, `デジタル名刺_バックアップ_${ymd}.json`, 'デジタル名刺のバックアップ');
+      backupStatus.textContent = { shared: 'バックアップを書き出しました。', downloaded: 'バックアップを保存しました。', cancelled: '' }[result];
+    } catch (e) {
+      backupStatus.textContent = 'バックアップを作れませんでした：' + e.message;
+    }
+  });
+
+  $('backup-import').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    try {
+      const restored = parseBackup(await file.text());
+      if (!confirm('いまの入力内容をバックアップの内容で置き換えます。よろしいですか？')) return;
+      state = restored;
+      save();
+      // 端末に保存できない環境（プライベートブラウズなど）では、読み込み直すと消えてしまう
+      if (JSON.stringify(load()) !== JSON.stringify(state)) {
+        backupStatus.textContent = 'この端末には保存できないため、復元できませんでした。通常のブラウズで開いてください。';
+        return;
+      }
+      location.reload(); // 画面を作り直して復元した内容を反映する
+    } catch (err) {
+      backupStatus.textContent = 'このファイルからは復元できません：' + err.message;
+    }
+  });
+
+  // 知らない項目や不正な値は取り込まない
+  function parseBackup(text) {
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      throw new Error('JSONとして読めません');
+    }
+    if (!data || data.app !== BACKUP_APP || data.version !== 1 || typeof data.state !== 'object') {
+      throw new Error('デジタル名刺のバックアップではありません');
+    }
+    const src = data.state;
+    const str = (v, max = 200) => (typeof v === 'string' ? v.slice(0, max) : undefined);
+    const keys = FIELDS.flatMap((f) => (f.labelKey ? [f.key, f.labelKey] : [f.key]));
+    const restored = { values: {}, enabled: {} };
+    keys.forEach((k) => {
+      const v = str(src.values && src.values[k]);
+      if (v !== undefined) restored.values[k] = v;
+      if (src.enabled && typeof src.enabled[k] === 'boolean') restored.enabled[k] = src.enabled[k];
+    });
+    if (THEMES[src.th]) restored.th = src.th;
+    if (FONTS[src.ft]) restored.ft = src.ft;
+    restored.usePhoto = src.usePhoto === true;
+    const photo = str(src.photo, 2000000);
+    if (photo && photo.startsWith('data:image/')) restored.photo = photo;
+    const baseUrl = str(src.baseUrl, 500);
+    if (baseUrl && /^https?:\/\//.test(baseUrl)) restored.baseUrl = baseUrl;
+    return restored;
+  }
+
   // ---- 名刺を見せる（横向き表示） -----------------------------------------
   const present = $('present');
   let wakeLock = null;
